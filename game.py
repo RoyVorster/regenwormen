@@ -124,6 +124,7 @@ class Game:
         self.roll.reset()
 
 
+# Quick test
 if __name__ == '__main__':
     game = Game(n_players=2)
 
