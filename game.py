@@ -34,12 +34,12 @@ class Game:
         return self.player_stacks[self.turn]
 
     @property
-    def top(self):
-        return len(self.own_stack) and self.own_stack[-1]
+    def game_done(self):
+        return len(self.board_stack) == 0
 
     @property
-    def tops(self):
-        return [stack[-1] if len(stack) > 0 and i != self.turn else 0 for i, stack in enumerate(self.player_stacks)]
+    def scores(self):
+        return [sum([int((s - MIN_DOM)/4) + 1 for s in stack]) for stack in self.player_stacks]
 
     ''' Perform an action '''
     def do(self, action: Action):
@@ -60,7 +60,7 @@ class Game:
 
     ''' Return all actions '''
     def get(self):
-        if self.game_done():
+        if self.game_done:
             return []
 
         options = []
@@ -79,20 +79,12 @@ class Game:
 
         return options if len(options) > 0 else [Action(GIVE_UP)]
 
-    ''' Check game done '''
-    def game_done(self):
-        return len(self.board_stack) == 0
-
-    ''' Get game winner '''
-    def game_winner(self):
-        totals = [sum(stack) for stack in self.player_stacks]
-        return totals.index(max(totals))
-
     ''' Give up and return domino if necessary '''
     def give_up(self):
-        if self.top:
+        top_domino = len(self.own_stack) and self.own_stack[-1]
+        if top_domino:
             self.own_stack.pop()
-            self.board_stack.append(self.top)
+            self.board_stack.append(top_domino)
 
         self.board_stack.remove(max(self.board_stack))
 
@@ -116,9 +108,10 @@ class Game:
 
     ''' Take domino from top of player stack '''
     def take_domino_from_player(self, domino, dry_run=False):
-        if domino in self.tops:
+        top_dominos = [s[-1] if len(s) > 0 and i != self.turn else 0 for i, s in enumerate(self.player_stacks)]
+        if domino in top_dominos:
             if not dry_run:
-                player_idx = self.tops.index(domino)
+                player_idx = top_dominos.index(domino)
                 self.player_stacks[player_idx].pop()
 
             return True
@@ -141,4 +134,4 @@ if __name__ == '__main__':
 
         game.do(options[-1])
 
-    print(game.game_winner())
+    print(game.scores)
