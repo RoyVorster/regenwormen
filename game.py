@@ -113,6 +113,7 @@ class Game:
             if not dry_run:
                 player_idx = top_dominos.index(domino)
                 self.player_stacks[player_idx].pop()
+                self.own_stack.append(domino)
 
             return True
 
