@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # Single roll (6 = wurmpie)
 class Roll:
     def __init__(self, n_dice=8):

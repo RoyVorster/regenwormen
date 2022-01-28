@@ -1,6 +1,5 @@
 import numpy as np
-from game_roll import Roll
-
+from game.game_roll import Roll
 
 MIN_DOM, MAX_DOM = 21, 36
 
@@ -19,7 +18,7 @@ class Action:
 
 class Game:
     def __init__(self, n_players=2, n_dice=8):
-        self.turn = 0
+        self.turn, self.turn_prev = 0, 0
         self.player_stacks = [[] for _ in range(n_players)]
         self.board_stack = list(range(MIN_DOM, MAX_DOM + 1))
 
@@ -43,6 +42,7 @@ class Game:
 
     ''' Perform an action '''
     def do(self, action: Action):
+        self.turn_prev = self.turn
         if action.action == ROLL:
             self.roll.do()
         elif action.action == SELECT:
@@ -134,6 +134,7 @@ if __name__ == '__main__':
         if not len(options):
             break
 
-        game.do(options[-1])
+        game.do(np.random.choice(options))
+        # game.do(options[-1])
 
     print(game.scores)
