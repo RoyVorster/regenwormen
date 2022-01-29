@@ -1,11 +1,11 @@
 import numpy as np
-from copy import deepcopy
+from copy import deepcopy, copy
 
-from game.game import *
+from game.game import Game
 
 class Node:
-    def __init__(self, game):
-        self.game = game
+    def __init__(self, game, action):
+        self.game, self.action = game, action # Store action for retrieving later
         self.parent, self.children = None, []
 
         self.reward, self.n_sims = 0, 1
@@ -24,36 +24,48 @@ class Node:
 
     @property
     def best_child(self):
-        scores = [child.score for child in self.children if not child.end_state]
+        scores = [child.score for child in self.children]
+        if not len(scores):
+            return None
 
         # Select highest score or random if multiple are the same
         idx = np.random.choice(np.where(scores == np.max(scores))[0])
         return self.children[idx]
 
+    @property
+    def best_action(self):
+        return self.action if self.best_child is None else self.best_child.action
+
     def add_child(self, child):
         child.parent = self
         self.children.append(child)
 
+    # Play single turn
     def play_out(self):
         game = deepcopy(self.game)
-        while not game.game_done:
+        while game.turn == self.game.turn and not game.game_done:
             action = np.random.choice(game.get())
             game.do(action)
 
-        scores = game.scores
-        reward = 1 if scores[self.game.turn] == max(scores) else 0
-
-        return reward
+        scores, turn = game.scores, self.game.turn
+        return scores[turn] - self.game.scores[turn]
 
 # Simplest possible pure MCTS implementation
 class MCTS:
-    def __init__(self, game):
-        self.root = Node(game)
+    def __init__(self, n_iter=100):
+        self.n_iter = n_iter
+
+    def set_root(self, game):
+        self.root = Node(game, "")
 
     def single_iteration(self):
         path = [self.root]
-        while len(path[-1].children):
-            path.append(path[-1].best_child)
+        while True:
+            best_child = path[-1].best_child
+            if not best_child:
+                break
+
+            path.append(best_child)
 
         # Run playouts for children states for node
         node = path[-1]
@@ -62,22 +74,29 @@ class MCTS:
             new_game.do(action)
 
             # Create new node and play the game until the end
-            new_node = Node(new_game)
+            new_node = Node(new_game, action)
             node.add_child(new_node)
 
             reward, turn = new_node.play_out(), new_node.game.turn
 
             # Backprop the rewards
             for node in path:
-                node.reward += reward*int(turn == node.game.turn) # Only give reward if we're the same player
+                node.reward += reward
                 node.n_sims += 1
 
-    def train(self, n_iter=5000):
-        for i in range(1, n_iter):
-            if (n_iter - i) % (n_iter/100) == 0:
+    def train(self, print_progress=False):
+        for i in range(self.n_iter):
+            if print_progress and (n_iter - i) % (self.n_iter/100) == 0:
                 print(f"At {100*i/n_iter:.2f}%", end="\r")
 
             self.single_iteration()
+
+    def play(self, game):
+        # Train from this node outward
+        self.set_root(game)
+        self.train()
+
+        return self.root.best_action
 
 if __name__ == '__main__':
     game = Game(n_players=2)
@@ -85,4 +104,4 @@ if __name__ == '__main__':
     ian = MCTS(game) # In honor of the player of games
     ian.train()
 
-    print(ian.root.children)
+    print(ian.root.children[0].children)

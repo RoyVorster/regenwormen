@@ -28,6 +28,11 @@ class Game:
         # Game parameters
         self.n_players = n_players
 
+    # Hacky hash for mcts
+    def __hash__(self):
+        return hash((tuple(map(tuple, self.player_stacks)), tuple(self.board_stack),
+                     hash(self.roll), self.turn))
+
     @property
     def own_stack(self):
         return self.player_stacks[self.turn]
