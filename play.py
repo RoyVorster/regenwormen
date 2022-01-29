@@ -1,15 +1,36 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
+from functools import reduce
+from copy import deepcopy
 
 from mcts_pure import MCTS
-from game.game import Game
+from game.game import *
 
 N_CPU_MAX = 10
 
-# Random ai for evaluation
+# Random agent for evaluation
 def play_random(game):
+    return np.random.choice(game.get())
+
+# Simple greedy agent for evaluation
+def take_highest(actions):
+    return reduce(lambda a, b: a if a.option > b.option else b, actions)
+
+def play_greedy(game):
     options = game.get()
+
+    if len(options) == 1:
+        return options[0]
+
+    take_actions = [o for o in options if o.action == TAKE]
+    if len(take_actions):
+        return take_highest(take_actions)
+
+    select_actions = [o for o in options if o.action == SELECT]
+    if len(select_actions):
+        return take_highest(select_actions)
+
     return np.random.choice(options)
 
 def play_game(agents):
@@ -22,7 +43,7 @@ def play_game(agents):
 
         # Select agent and get move
         f = agents[game.turn]
-        action = f(game)
+        action = f(deepcopy(game))
 
         # Perform the action
         game.do(action)
@@ -30,8 +51,8 @@ def play_game(agents):
     return game.scores
 
 # Play a bunch of games and store results
-def evaluate(agents, n_games=50):
-    all_scores = Parallel(n_jobs=min(n_games, N_CPU_MAX))(delayed(play_game)(agents) for _ in range(n_games))
+def evaluate(agents, n_games=100):
+    all_scores = Parallel(n_jobs=N_CPU_MAX)(delayed(play_game)(agents) for _ in range(n_games))
 
     # Plot results
     all_scores = np.array(all_scores).T
@@ -44,6 +65,6 @@ def evaluate(agents, n_games=50):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [play_random, MCTS(n_iter=10).play]
+    agents = [MCTS(n_iter=15).play, play_greedy, play_greedy, play_greedy, play_greedy, play_random]
     evaluate(agents)
 
