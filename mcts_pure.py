@@ -11,16 +11,14 @@ class Node:
         self.reward, self.n_sims = 0, 1e-5
         self.c = np.sqrt(2) # Discovery parameter
 
+        self.end_state, self.turn = self.game.game_done, self.game.turn
+
     def __repr__(self):
         return f"Number of visits, reward: {self.n_sims}, {self.reward}"
 
     @property
     def score(self):
         return self.reward/self.n_sims + self.c*np.sqrt(np.log(self.parent.n_sims)/self.n_sims)
-
-    @property
-    def end_state(self):
-        return self.game.game_done
 
     @property
     def best_child(self):
@@ -40,21 +38,28 @@ class Node:
         child.parent = self
         self.children.append(child)
 
-    # Play single turn
-    def play_out(self, n_turns=2):
-        game = deepcopy(self.game)
+    # Play single turn multiple times
+    def play_out(self, n_turns=1, n_iter=5):
+        def single_play_out():
+            game = deepcopy(self.game)
 
-        turn_prev, n_turns_played = self.game.turn, 0
-        while not game.game_done and n_turns_played < n_turns:
-            action = np.random.choice(game.get())
-            game.do(action)
+            turn_prev, n_turns_played = self.turn, 0
+            while not game.game_done and n_turns_played < n_turns:
+                action = np.random.choice(game.get())
+                game.do(action)
 
-            if game.turn != turn_prev:
-                n_turns_played += 1
-                turn_prev = game.turn
+                if game.turn != turn_prev:
+                    n_turns_played += 1
+                    turn_prev = game.turn
 
-        turn = game.turn
-        return game.scores[turn] - self.game.scores[turn]
+            return game.scores[self.turn] - self.game.scores[self.turn]
+
+        # Average rewards
+        reward = sum([single_play_out() for _ in range(n_iter)])/n_iter 
+
+        # Squared reward function
+        self.reward, self.n_sims = np.sign(reward)*reward**2, 1
+        return self.reward
 
 # Simplest possible pure MCTS implementation
 class MCTS:
@@ -83,7 +88,7 @@ class MCTS:
             new_node = Node(new_game, action)
             node.add_child(new_node)
 
-            reward, turn = new_node.play_out(), new_node.game.turn
+            reward, turn = new_node.play_out(), new_node.turn
 
             # Backprop the rewards
             for node in path:
@@ -104,10 +109,3 @@ class MCTS:
 
         return self.root.best_action
 
-if __name__ == '__main__':
-    game = Game(n_players=2)
-
-    ian = MCTS(game) # In honor of the player of games
-    ian.train()
-
-    print(ian.root.children[0].children)
