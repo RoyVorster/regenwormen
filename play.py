@@ -1,7 +1,11 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from joblib import Parallel, delayed
+
 from mcts_pure import MCTS
 from game.game import Game
 
-import numpy as np
+N_CPU_MAX = 10
 
 # Random ai for evaluation
 def play_random(game):
@@ -23,7 +27,23 @@ def play_game(agents):
         # Perform the action
         game.do(action)
 
+    return game.scores
+
+# Play a bunch of games and store results
+def evaluate(agents, n_games=100):
+    all_scores = Parallel(n_jobs=min(n_games, N_CPU_MAX))(delayed(play_game)(agents) for _ in range(n_games))
+
+    # Plot results
+    all_scores = np.array(all_scores).T
+    for i, agent_scores in enumerate(all_scores):
+        plt.plot(np.cumsum(agent_scores), label=f"Agent {i}")
+
+    plt.grid()
+    plt.legend()
+
+    plt.show()
+
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=100).play, play_random]
-    play_game(agents)
+    agents = [MCTS(n_iter=10).play, play_random]
+    evaluate(agents)
 
