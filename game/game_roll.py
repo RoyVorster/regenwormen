@@ -6,10 +6,6 @@ class Roll:
         self.reset()
         self.n_dice = n_dice
 
-    # Hashing for mcts
-    def __hash__(self):
-        return hash((tuple(self.roll), tuple(self.total_roll)))
-
     @property
     def dice_left(self):
         return self.n_dice - len(self.total_roll)
