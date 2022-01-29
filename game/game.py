@@ -91,14 +91,16 @@ class Game:
             self.own_stack.pop()
             self.board_stack.append(top_domino)
 
-        self.board_stack.remove(max(self.board_stack))
+        max_board_domino = max(self.board_stack)
+        if top_domino != max_board_domino:
+            self.board_stack.remove(max_board_domino)
 
     ''' Take domino '''
     def take_domino(self, domino, dry_run=False):
         return self.take_domino_from_board(domino, dry_run) or \
                self.take_domino_from_player(domino, dry_run)
 
-    ''' Take domino from baord stack '''
+    ''' Take domino from board stack '''
     def take_domino_from_board(self, domino, dry_run=False):
         available = [d for d in self.board_stack if domino >= d]
         if len(available):
