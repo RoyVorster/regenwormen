@@ -30,7 +30,7 @@ def play_game(agents):
     return game.scores
 
 # Play a bunch of games and store results
-def evaluate(agents, n_games=100):
+def evaluate(agents, n_games=50):
     all_scores = Parallel(n_jobs=min(n_games, N_CPU_MAX))(delayed(play_game)(agents) for _ in range(n_games))
 
     # Plot results
@@ -44,6 +44,6 @@ def evaluate(agents, n_games=100):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=10).play, play_random]
+    agents = [play_random, MCTS(n_iter=10).play]
     evaluate(agents)
 

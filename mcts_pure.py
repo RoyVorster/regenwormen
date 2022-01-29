@@ -8,7 +8,7 @@ class Node:
         self.game, self.action = game, action # Store action for retrieving later
         self.parent, self.children = None, []
 
-        self.reward, self.n_sims = 0, 1
+        self.reward, self.n_sims = 0, 1e-5
         self.c = np.sqrt(2) # Discovery parameter
 
     def __repr__(self):
@@ -41,14 +41,20 @@ class Node:
         self.children.append(child)
 
     # Play single turn
-    def play_out(self):
+    def play_out(self, n_turns=2):
         game = deepcopy(self.game)
-        while game.turn == self.game.turn and not game.game_done:
+
+        turn_prev, n_turns_played = self.game.turn, 0
+        while not game.game_done and n_turns_played < n_turns:
             action = np.random.choice(game.get())
             game.do(action)
 
-        scores, turn = game.scores, self.game.turn
-        return scores[turn] - self.game.scores[turn]
+            if game.turn != turn_prev:
+                n_turns_played += 1
+                turn_prev = game.turn
+
+        turn = game.turn
+        return game.scores[turn] - self.game.scores[turn]
 
 # Simplest possible pure MCTS implementation
 class MCTS:
