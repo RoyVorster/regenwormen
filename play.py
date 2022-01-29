@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from functools import reduce
-from copy import deepcopy
 
 from mcts_pure import MCTS
 from game.game import *
@@ -43,14 +42,14 @@ def play_game(agents):
 
         # Select agent and get move
         f = agents[game.turn]
-        action = f(deepcopy(game))
+        action = f(game)
 
         # Perform the action
         game.do(action)
 
     return game.scores
 
-# Play a bunch of games and store results
+# Play a bunch of games and plot results
 def evaluate(agents, n_games=100):
     all_scores = Parallel(n_jobs=N_CPU_MAX)(delayed(play_game)(agents) for _ in range(n_games))
 
