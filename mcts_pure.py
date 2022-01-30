@@ -88,7 +88,7 @@ class MCTS:
             new_node = Node(new_game, action)
             node.add_child(new_node)
 
-            reward, turn = new_node.play_out(), new_node.turn
+            reward = new_node.play_out()
 
             # Backprop the rewards
             for node in path:
