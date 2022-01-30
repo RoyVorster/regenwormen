@@ -8,7 +8,7 @@ class Node:
         self.game, self.action = game, action # Store action for retrieving later
         self.parent, self.children = None, []
 
-        self.reward, self.n_sims = 0, 1e-5
+        self.reward, self.n_sims = 0, 0
         self.c = np.sqrt(2) # Discovery parameter
 
         self.end_state, self.turn = self.game.game_done, self.game.turn
