@@ -3,15 +3,24 @@ from copy import deepcopy, copy
 
 from game.game import Game
 
+# Reward function. Average difference with the other players
+def f_reward(score, scores):
+    return sum([score - s for s in scores])/(len(scores) - 1)
+
 class Node:
-    def __init__(self, game, action):
+    def __init__(self, game, action, reward_multiplier=0.25, c=np.sqrt(2)):
         self.game, self.action = game, action # Store action for retrieving later
         self.parent, self.children = None, []
 
         self.reward, self.n_sims = 0, 0
-        self.c = np.sqrt(2) # Discovery parameter
 
+        # Game state info
         self.end_state, self.turn = self.game.game_done, self.game.turn
+        self.start_reward = f_reward(self.game.dominos[self.turn], self.game.dominos)
+
+        # Settings
+        self.reward_multiplier = reward_multiplier
+        self.c = c
 
     def __repr__(self):
         return f"Number of visits, reward: {self.n_sims}, {self.reward}"
@@ -45,26 +54,39 @@ class Node:
 
             turn_prev, n_turns_played = self.turn, 0
             while not game.game_done and n_turns_played < n_turns:
-                action = np.random.choice(game.get())
+                actions, p = game.get(), None
+
+                # Simple heuristic, higher is better
+                val = np.array([a.option if a.option is not None else 0 for a in actions])
+
+                if val.sum() > 0:
+                    val = [(v if v is not None else val.mean()) for v in val]
+
+                    p = np.array([v/sum(val) for v in val])
+                    p /= p.sum()
+
+                # Select with non-uniform probability
+                action = np.random.choice(actions, p=p)
                 game.do(action)
 
                 if game.turn != turn_prev:
                     n_turns_played += 1
                     turn_prev = game.turn
 
-            return game.scores[self.turn] - self.game.scores[self.turn]
+            # Compute increase in reward over this turn
+            return f_reward(game.dominos[self.turn], game.dominos) - self.start_reward
 
-        # Average rewards
-        reward = sum([single_play_out() for _ in range(n_iter)])/n_iter 
-
-        # Squared reward function
+        # Average + square rewards
+        reward = self.reward_multiplier*sum([single_play_out() for _ in range(n_iter)])/n_iter 
         self.reward, self.n_sims = np.sign(reward)*reward**2, 1
+
         return self.reward
 
 # Simplest possible pure MCTS implementation
 class MCTS:
-    def __init__(self, n_iter=100):
+    def __init__(self, n_iter=100, discount=0.9):
         self.n_iter = n_iter
+        self.discount = discount
 
     def set_root(self, game):
         self.root = Node(game, "")
@@ -91,8 +113,10 @@ class MCTS:
             reward = new_node.play_out()
 
             # Backprop the rewards
-            for node in path:
-                node.reward += reward
+            for i, node in enumerate(path):
+                j = len(path) - i - 1
+
+                node.reward += reward*self.discount**j
                 node.n_sims += 1
 
     def train(self, print_progress=False):

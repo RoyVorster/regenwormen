@@ -40,6 +40,10 @@ class Game:
     def scores(self):
         return [sum([int((s - MIN_DOM)/4) + 1 for s in stack]) for stack in self.player_stacks]
 
+    @property
+    def dominos(self):
+        return [sum(stack) for stack in self.player_stacks]
+
     ''' Perform an action '''
     def do(self, action: Action):
         self.turn_prev = self.turn
