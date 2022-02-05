@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from functools import reduce
 
-from mcts_pure import MCTS
+from mcts_pure import MCTS, f_reward
 from game.game import *
 
 N_CPU_MAX = 10
@@ -48,24 +48,34 @@ def play_game(agents):
     return game.scores
 
 # Play a bunch of games and plot results
-def evaluate(agents, n_games=50):
+def evaluate(agents, n_games=30):
     def loop():
         idxs = np.random.choice(len(agents), len(agents))
         return np.array(play_game(np.array(agents)[idxs]))[idxs]
 
     all_scores = Parallel(n_jobs=N_CPU_MAX)(delayed(loop)() for _ in range(n_games))
+    all_scores = np.array(all_scores).T
 
     # Plot results
-    all_scores = np.array(all_scores).T
+    fig, (ax_1, ax_2) = plt.subplots(nrows=2)
     for i, agent_scores in enumerate(all_scores):
-        plt.plot(np.cumsum(agent_scores), label=f"Agent {i}")
+        ax_1.plot(np.cumsum(agent_scores), label=f"Agent {i}")
 
-    plt.grid()
-    plt.legend()
+        rewards = [f_reward(s, all_scores[:, j]) for j, s in enumerate(agent_scores)]
+        ax_2.plot(np.cumsum(rewards), label=f"Agent {i}")
+
+    ax_1.grid()
+    ax_1.legend()
+
+    ax_2.grid()
+    ax_2.legend()
+
+    ax_1.set_title("Worm count")
+    ax_2.set_title("Reward function")
 
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=15).play, play_greedy, play_random]
+    agents = [MCTS(n_iter=5).play, play_greedy]
     evaluate(agents)
 
