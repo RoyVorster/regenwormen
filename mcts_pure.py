@@ -114,10 +114,10 @@ class MCTS:
 
             # Backprop the rewards
             for i, node in enumerate(path):
-                j = len(path) - i - 1
+                d = self.discount**(len(path) - i - 1)
 
-                node.reward += reward*self.discount**j
-                node.n_sims += 1
+                node.reward += reward*d
+                node.n_sims += d
 
     def train(self, print_progress=False):
         for i in range(self.n_iter):
