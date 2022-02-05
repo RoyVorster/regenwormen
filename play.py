@@ -34,8 +34,6 @@ def play_greedy(game):
 
 def play_game(agents):
     game = Game(n_players=len(agents))
-
-    ian = MCTS()
     while True:
         if game.game_done:
             break
@@ -50,8 +48,12 @@ def play_game(agents):
     return game.scores
 
 # Play a bunch of games and plot results
-def evaluate(agents, n_games=100):
-    all_scores = Parallel(n_jobs=N_CPU_MAX)(delayed(play_game)(agents) for _ in range(n_games))
+def evaluate(agents, n_games=50):
+    def loop():
+        idxs = np.random.choice(len(agents), len(agents))
+        return np.array(play_game(np.array(agents)[idxs]))[idxs]
+
+    all_scores = Parallel(n_jobs=N_CPU_MAX)(delayed(loop)() for _ in range(n_games))
 
     # Plot results
     all_scores = np.array(all_scores).T
@@ -64,6 +66,6 @@ def evaluate(agents, n_games=100):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=15).play, play_greedy, play_greedy, play_greedy, play_greedy, play_random]
+    agents = [MCTS(n_iter=15).play, play_greedy, play_random]
     evaluate(agents)
 
