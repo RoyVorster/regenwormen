@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
 from functools import reduce
 
-from mcts_pure import MCTS, f_reward
+from mcts import MCTS, f_reward
 from game.game import *
 
 N_CPU_MAX = 10
