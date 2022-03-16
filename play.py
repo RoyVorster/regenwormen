@@ -28,11 +28,14 @@ def play_greedy(game, select_max_sum=True):
 
     select_actions = [o for o in options if o.action == SELECT]
     if len(select_actions):
-        if select_max_sum:
-            v = [list(game.roll.roll).count(a.option)*a.option for a in select_actions]
-            return select_actions[v.index(max(v))]
+        highest = take_highest(select_actions)
+        if highest.option == 6: return highest # Prioritize wurmpies
 
-        return take_highest(select_actions)
+        if select_max_sum:
+            v = np.array([sum(game.roll.roll == a.option)*a.option for a in select_actions])
+            return select_actions[np.argmax(v)]
+
+        return highest
 
     return np.random.choice(options)
 
@@ -80,7 +83,6 @@ def evaluate(agents, n_games=30):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=5).play, partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
-    # agents = [partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
-    evaluate(agents, n_games=200)
+    agents = [MCTS(n_iter=10).play, partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
+    evaluate(agents, n_games=100)
 
