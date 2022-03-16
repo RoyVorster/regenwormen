@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
-from functools import reduce
+from functools import reduce, partial
 
 from mcts import MCTS, f_reward
 from game.game import *
@@ -16,7 +16,7 @@ def play_random(game):
 def take_highest(actions):
     return reduce(lambda a, b: a if a.option > b.option else b, actions)
 
-def play_greedy(game):
+def play_greedy(game, select_max_sum=True):
     options = game.get()
 
     if len(options) == 1:
@@ -28,6 +28,10 @@ def play_greedy(game):
 
     select_actions = [o for o in options if o.action == SELECT]
     if len(select_actions):
+        if select_max_sum:
+            v = [list(game.roll.roll).count(a.option)*a.option for a in select_actions]
+            return select_actions[v.index(max(v))]
+
         return take_highest(select_actions)
 
     return np.random.choice(options)
@@ -76,6 +80,7 @@ def evaluate(agents, n_games=30):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=5).play, play_greedy]
-    evaluate(agents)
+    agents = [MCTS(n_iter=5).play, partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
+    # agents = [partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
+    evaluate(agents, n_games=200)
 
