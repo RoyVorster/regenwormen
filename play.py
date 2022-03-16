@@ -55,9 +55,11 @@ def play_game(agents):
     return game.scores
 
 # Play a bunch of games and plot results
-def evaluate(agents, n_games=30):
+def evaluate(agents, randomize_agents=True, n_games=30):
+    n_agents = len(agents)
+
     def loop():
-        idxs = np.random.choice(len(agents), len(agents))
+        idxs = np.random.choice(n_agents, n_agents) if randomize_agents else np.arange(0, n_agents, 1)
         return np.array(play_game(np.array(agents)[idxs]))[idxs]
 
     all_scores = Parallel(n_jobs=N_CPU_MAX)(delayed(loop)() for _ in range(n_games))
@@ -83,6 +85,6 @@ def evaluate(agents, n_games=30):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=10).play, partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
-    evaluate(agents, n_games=100)
+    agents = [MCTS(n_iter=5).play, partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
+    evaluate(agents, n_games=100, randomize_agents=True)
 
