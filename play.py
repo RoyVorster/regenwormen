@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
-from functools import reduce, partial
+from functools import reduce
 
 from mcts import MCTS, f_reward
 from game.game import *
@@ -13,11 +13,10 @@ def play_random(game):
     return np.random.choice(game.get())
 
 # Simple greedy agent for evaluation
-def take_highest(actions, max_sum=False):
-    val = lambda a: [a.option for a in actions].count(a.option)*a.option if max_sum else a.option
-    return reduce(lambda a, b: a if val(a) > val(b) else b, actions)
+def take_highest(actions):
+    return reduce(lambda a, b: a if a.option > b.option else b, actions)
 
-def play_greedy(game, max_sum=False):
+def play_greedy(game):
     options = game.get()
 
     if len(options) == 1:
@@ -29,7 +28,7 @@ def play_greedy(game, max_sum=False):
 
     select_actions = [o for o in options if o.action == SELECT]
     if len(select_actions):
-        return take_highest(select_actions, max_sum=max_sum)
+        return take_highest(select_actions)
 
     return np.random.choice(options)
 
@@ -49,7 +48,7 @@ def play_game(agents):
     return game.scores
 
 # Play a bunch of games and plot results
-def evaluate(agents, n_games=100):
+def evaluate(agents, n_games=30):
     def loop():
         idxs = np.random.choice(len(agents), len(agents))
         return np.array(play_game(np.array(agents)[idxs]))[idxs]
@@ -77,7 +76,6 @@ def evaluate(agents, n_games=100):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=5).play, partial(play_greedy, max_sum=False), partial(play_greedy, max_sum=True)]
-    # agents = [partial(play_greedy, max_sum=False), partial(play_greedy, max_sum=True)]
+    agents = [MCTS(n_iter=5).play, play_greedy]
     evaluate(agents)
 
