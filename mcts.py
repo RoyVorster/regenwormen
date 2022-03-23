@@ -48,22 +48,23 @@ class Node:
         self.children.append(child)
 
     # Play single turn multiple times
-    def play_out(self, n_turns=1, n_iter=5):
+    def play_out(self, n_turns=1, n_iter=10, biased_playout=True):
         def single_play_out():
             game = deepcopy(self.game)
 
             turn_prev, n_turns_played = self.turn, 0
-            while not game.game_done and n_turns_played < n_turns:
+            while not game.game_done and n_turns_played < (1 + (n_turns - 1)*game.n_players):
                 actions, p = game.get(), None
 
                 # Simple heuristic, higher is better
-                val = np.array([a.option if a.option is not None else 0 for a in actions])
+                if biased_playout:
+                    val = np.array([a.option if a.option is not None else 0 for a in actions])
 
-                if val.sum() > 0:
-                    val = [(v if v is not None else val.mean()) for v in val]
+                    if val.sum() > 0:
+                        val = [(v if v is not None else val.mean()) for v in val]
 
-                    p = np.array([v/sum(val) for v in val])
-                    p /= p.sum()
+                        p = np.array([v/sum(val) for v in val])
+                        p /= p.sum()
 
                 # Select with non-uniform probability
                 action = np.random.choice(actions, p=p)

@@ -85,6 +85,6 @@ def evaluate(agents, randomize_agents=True, n_games=30):
     plt.show()
 
 if __name__ == '__main__':
-    agents = [MCTS(n_iter=5).play, partial(play_greedy, select_max_sum=False), partial(play_greedy, select_max_sum=True)]
-    evaluate(agents, n_games=100, randomize_agents=True)
+    agents = [MCTS(n_iter=5).play, partial(play_greedy, select_max_sum=True)]
+    evaluate(agents, n_games=200, randomize_agents=True)
 

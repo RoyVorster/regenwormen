@@ -64,10 +64,10 @@ class Game:
 
     ''' Return all actions '''
     def get(self):
-        if self.game_done:
-            return []
-
         options = []
+
+        if self.game_done:
+            return options
 
         # Rolling options
         if self.roll.dice_left > 0:
