@@ -122,8 +122,8 @@ class MCTS:
 
     def train(self, print_progress=False):
         for i in range(self.n_iter):
-            if print_progress and (n_iter - i) % (self.n_iter/100) == 0:
-                print(f"At {100*i/n_iter:.2f}%", end="\r")
+            if print_progress and (self.n_iter - i) % (self.n_iter/100) == 0:
+                print(f"At {100*i/self.n_iter:.2f}%", end="\r")
 
             self.single_iteration()
 
@@ -133,4 +133,3 @@ class MCTS:
         self.train()
 
         return self.root.best_action
-
