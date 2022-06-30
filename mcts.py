@@ -89,6 +89,8 @@ class MCTS:
         self.n_iter = n_iter
         self.discount = discount
 
+        self.root = None
+
     def set_root(self, game):
         self.root = Node(game, "")
 
@@ -133,3 +135,23 @@ class MCTS:
         self.train()
 
         return self.root.best_action
+
+    # Render graph
+    def graph_viz(self, f_name='mcts_graph'):
+        from graphviz import Digraph
+
+        graph = Digraph("g", strict=False)
+
+        # Depth-first search
+        def dfs(node):
+            if node not in graph and len(node.children):
+                graph.node(node.score)
+
+                for new_node in node.children:
+                    graph.edge(node.label, new_node.label, label=str(new_node.action))
+                    dfs(node)
+
+        dfs(self.root)
+
+        graph.render(f_name, view=True)
+        return graph
